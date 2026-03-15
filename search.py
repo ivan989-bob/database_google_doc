@@ -31,11 +31,28 @@ def load_data():
             
             # протягиваем только колонку фио
             if 'фио' in df.columns:
+
+                is_new_client = df['фио'].replace('', None).notna()
+
+                client_group = is_new_client.cumsum()
+
+                df.index = df.index + 2
+                 #------------------------
+                if 'дата' in df.columns:
+                    df['дата'] = pd.to_datetime(df['дата'], errors='coerce')
+                    df['дата'] = df['дата'].dt.strftime('%d.%m.%Y')
+                    df['дата'] = df['дата'].replace('NaT', '')
+                #------------------------------
+
                 # Замена пустых строк на None и протяжка значения сверху вниз
-                df['фио'] = df['фио'].replace('', None).ffill()
+                df['фио'] = df['фио'].replace('', None)
+                df['телефон'] = df['телефон'].replace('', None)
+             
+                df['фио'] = df.groupby(client_group)['фио'].ffill()
+                df['телефон'] = df.groupby(client_group)['телефон'].ffill()
 
             for col in df.columns:
-                df[col] = df[col].astype(str).replace(['None', 'nan'], '')
+                df[col] = df[col].astype(str).replace({'None': '', 'nan': '', 'NaT': ''})
             return df
         else:
             st.error(f"Ошибка доступа к облаку (Код{response.status_code})")
