@@ -32,24 +32,30 @@ def load_data():
             # протягиваем только колонку фио
             if 'фио' in df.columns:
 
-                is_new_client = df['фио'].replace('', None).notna()
-
-                client_group = is_new_client.cumsum()
-
                 df.index = df.index + 2
-                 #------------------------
+                 #------------------------  дата
                 if 'дата' in df.columns:
-                    df['дата'] = pd.to_datetime(df['дата'], errors='coerce')
-                    df['дата'] = df['дата'].dt.strftime('%d.%m.%Y')
-                    df['дата'] = df['дата'].replace('NaT', '')
-                #------------------------------
+                    temp_main_dates = pd.to_datetime(df['дата'], utc=True, errors='coerce')
+                    is_main_date = temp_main_dates.notna()
+                    df.loc[is_main_date, 'дата'] = (temp_main_dates[is_main_date] + pd.Timedelta(hours=12)).dt.strftime('%d.%m.%Y')
+                #------------------------------ вывод
+                if 'вывод' in df.columns:
+                    temp_dates = pd.to_datetime(df['вывод'], utc=True, errors='coerce')
+
+                    is_out_date = temp_dates.notna()
+
+                    df.loc[is_out_date, 'вывод'] = (temp_dates[is_out_date] + pd.Timedelta(hours=12)).dt.strftime('%d.%m.%Y')
+                #---------------------------------------------------
 
                 # Замена пустых строк на None и протяжка значения сверху вниз
                 df['фио'] = df['фио'].replace('', None)
                 df['телефон'] = df['телефон'].replace('', None)
-             
-                df['фио'] = df.groupby(client_group)['фио'].ffill()
-                df['телефон'] = df.groupby(client_group)['телефон'].ffill()
+                df['адрес'] = df['адрес'].replace('', None)
+
+                df['фио'] = df['фио'].ffill()
+
+                df['телефон'] = df.groupby('фио')['телефон'].ffill()
+                df['адрес'] = df.groupby('фио')['адрес'].ffill()
 
             for col in df.columns:
                 df[col] = df[col].astype(str).replace({'None': '', 'nan': '', 'NaT': ''})
@@ -117,7 +123,7 @@ if search_name or search_order:
         display_df = result[cols].copy()
 
         mask = display_df['фио'].duplicated()
-        display_df.loc[mask,['фио', 'телефон', 'дата']] = ""
+        display_df.loc[mask,['фио', 'телефон', 'дата', 'адрес']] = ""
 
         st.dataframe(display_df, use_container_width=True)
     else:
