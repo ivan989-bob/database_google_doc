@@ -29,15 +29,13 @@ def load_data():
                 st.error(f"Критическая ошибка в Google таблице отсутствуют колонки: {', '.join(missing_cols)}")
                 return pd.DataFrame()
             
-            # колонки, которые нужно "протянуть" вниз
-            fill_cols = ['фио','телефон','дата']
-            for col in fill_cols:
-                if col in df.columns:
-                    # Замена пустых строк на None и протяжка значения сверху вниз
-                    df[col] = df[col].replace('', None).ffill()
+            # протягиваем только колонку фио
+            if 'фио' in df.columns:
+                # Замена пустых строк на None и протяжка значения сверху вниз
+                df['фио'] = df['фио'].replace('', None).ffill()
 
             for col in df.columns:
-                df[col] = df[col].astype(str)
+                df[col] = df[col].astype(str).replace(['None', 'nan'], '')
             return df
         else:
             st.error(f"Ошибка доступа к облаку (Код{response.status_code})")
@@ -90,10 +88,15 @@ if search_order:
 # поиск
 if search_name or search_order:
     if not result.empty:
-        st.success(f"Найдено совпадений: {len(result)}")
-        # фильтр по дате (можно выключить)
-        result = result.sort_values(by='дата', ascending=False)
-        # вывод таблицы (cols - что входит в таблицу)
+        # количество клиентов
+        client = result['фио'].nunique()
+        #количество строк
+        total = len(result)
+        # вывод по совпадениям
+        st.success(f"Найдено клиентов: {client} (всего строк: {len(result)})")
+        #    фильтр по дате (можно выключить)
+        #result = result.sort_values(by='дата', ascending=False)
+        #    вывод таблицы (cols - что входит в таблицу)
         display_df = result[cols].copy()
 
         mask = display_df['фио'].duplicated()

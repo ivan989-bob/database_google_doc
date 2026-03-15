@@ -1,0 +1,10 @@
+# Секреты Streamlit
+.streamlit/
+
+# Кэш
+__pycache__
+*.pyc 
+
+# Файлы системы
+.DS_Store
+Thumbs.db
